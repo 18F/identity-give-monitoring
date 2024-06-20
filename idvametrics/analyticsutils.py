@@ -74,6 +74,38 @@ def get_composite_after_key(query_result: dict) -> dict:
     return query_result["aggregations"]["composite_buckets"]["after_key"]
 
 
+def get_flows_by_rps(email: str, password: str, base_url: str, totp: str) -> dict:
+    """
+    Returns a mapping of RPs to a list of their flows, as well as whether those flows
+    are enabled by a flow policy.
+    """
+    apps_url = f"{base_url}/v1/apps"
+    auth_header = login.get_login(email, password, base_url, totp)
+    json = requests.get(apps_url, headers=auth_header).json()
+    try:
+        apps = json["apps"]
+    except KeyError:
+        print(json)
+        sys.exit(1)
+
+    rps_flows = {}
+
+    for app in apps:
+        rp = app["metadata"]["rpName"]
+        flows = []
+        for policy in app["policies"]:
+            status = policy["status"]
+            for flow in policy["flows"]:
+                flow_id = flow["flowId"]
+                flows.append({"flow": flow_id, "status": status})
+        if rp in rps_flows:
+            rps_flows[rp]["flows"].extend(flows)
+        else:
+            rps_flows[rp] = {"flows": flows}
+
+    return rps_flows
+
+
 def get_mappings(
     flow_id: str, email: str, password: str, base_url: str, totp: str
 ) -> dict:

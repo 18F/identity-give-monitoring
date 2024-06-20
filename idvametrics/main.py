@@ -70,10 +70,18 @@ def main() -> None:
     """
     The main method for running the script.
     """
+
     arguments = get_command_line_arguments()
 
     mappings = analyticsutils.get_mappings(
         arguments.flow_id,
+        arguments.username,
+        arguments.password,
+        arguments.base_url,
+        arguments.totp,
+    )
+
+    rps_flows = analyticsutils.get_flows_by_rps(
         arguments.username,
         arguments.password,
         arguments.base_url,
